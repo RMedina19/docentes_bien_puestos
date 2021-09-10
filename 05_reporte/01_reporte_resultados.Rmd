@@ -1,0 +1,171 @@
+---
+title: __Reporte de resultados de la encuesta Docentes Bien Puestos__
+subtitle: __Tablas y gráficas de estadística descriptiva__
+
+author: 
+- CIDE-PPD
+
+date: "`r format(Sys.time(), '%d/%m/%Y')`"
+
+output: 
+  rmarkdown::pdf_document:
+    toc: true
+    latex_engine: xelatex
+
+---
+
+<!---  Configuración inicial para programación en R --> 
+
+```{r setup, include=FALSE, encoding = 'UTF-8', cache=TRUE}
+# 0. Configuración inicial -----------------------------------------------------
+# Codificación 
+knitr::opts_chunk$set(echo = FALSE)
+options(Encoding="Latin-1")
+
+# Limpiar área de trabajo 
+rm(list=ls())
+
+# Cargar librerías 
+require(pacman)
+p_load(readxl, tidyverse, tidyr, knitr, kableExtra, pander, scales)
+```
+
+
+```{r load_data, include=FALSE, encoding = 'UTF-8', cache=TRUE}
+
+# Dirección 
+inp <- "../03_datos_limpios/"
+
+
+# 1. Cargar datos --------------------------------------------------------------
+
+# Base unificada de todas las respuestas
+load(paste0(inp, "df_resultados_frecuencias.RData"))
+
+```
+
+
+
+```{r general_vector, include = FALSE, cache=TRUE}
+
+# Cambiar nombre de la base para facilitar manipulación
+df_data <- df_resultados_frecuencias
+
+# Guardar nombre de las variables 
+v_vars  <- unique(df_data$q_code)
+
+# Generar vectores para gráfica 
+# Vectores generales 
+v_ylab  <- "Número de respuestas"
+v_capt  <- "Fuente: Elaboración propia con datos de la encuesta \"Docentes bien puestos\" del CIDE-PPD."
+
+# Calcular total de respuestas 
+v_total <- unique((df_data %>% 
+        group_by(q_code)    %>% 
+        summarise(total = sum(total)))$total)
+
+
+```
+
+\newpage
+
+# Descripción general y nota metodológica 
+
+La encuesta _Docentes bien puestos_ fue diseñada, programada, implementada y procesada por el Programa de Políticas de Drogas del Centro de Investigación y Docencia Económicas (CIDE-PPD). La encuesta fue conformada por un total de 17 preguntas y fue programada usando SurveyToGo y levantada en línea. Para lograrlo, se generó un hipervínculo de acceso directo al formulario en línea de la encuesta. Dicha liga fue compartida con los docentes el día 23 de agosto de 2021. En total, se recopilaron  `r v_total` respuestas. 
+
+Una vez cerrado el proceso de levantamiento, las  `r v_total` respuestas de la encuesta fueron limpiadas y procesadas en R. Para cada pregunta se generó una tabla y una gráfica con sus respectivas estadísticas descriptivas. También se recopilaron las respuestas de preguntas abiertas, para tomar en cuenta cualquier comentario que las personas participantes quisieran compartir. En aras de promover la transparencia y la reproducibilidad de la ciencia, se creó un repositorio de GitHub donde se encuentran los datos crudos de las  `r v_total` respuestas, generados con SurveyToGo, los códigos de procesamiento en R, las gráficas descriptivas de cada pregunta y el reporte con tablas de estadística descriptiva de dicho proyecto. El repositorio está disponible en https://github.com/RMedina19/docentes_bien_puestos.    
+
+El presente reporte incluye los resultados de la encuesta _Docentes bien puestos_.
+
+
+
+\newpage
+
+# Presentación de resultados 
+
+```{r ensayo_tabla, include = FALSE, encoding = 'Latin-1', cache=TRUE}
+
+# Datos de la variables 
+n_var   <- v_vars[1]
+df_var  <- df_data %>% filter(q_code == n_var)
+n_title <- df_var$q_text
+
+df_chula <- df_var %>% 
+    select(q_text, a_text, total, p_text) %>% 
+    rename(
+        Pregunta   = q_text, 
+        Respuesta  = a_text, 
+        Frecuencia = total, 
+        Porcentaje = p_text)
+
+# pander(df_chula)
+# pandoc.table(df_chula)
+kable(df_chula)
+```
+
+
+
+
+```{r loop, echo = FALSE,  results = 'asis', cache=TRUE}
+
+for(i in 1:length(v_vars)){
+    # Guardar datos de la variable
+    n_var   <- v_vars[i]
+    df_var  <- df_data %>% filter(q_code == n_var)
+    n_title <- as.character((as.data.frame(table(df_var$q_text)))[1, 1])
+    n_limit <- max(df_var$total)+0.1*max(df_var$total)
+
+    # Generar tabla
+    pandoc.header(n_title, level = 2)
+
+    # print(paste(
+    #     "Número de la pregunta:", unique(df_var$q_id)[1], "\n", 
+    #     "Código de la pregunta:", unique(df_var$q_code)[1]))
+    # 
+    
+    df_chula <- df_var                      %>%
+        ungroup()                           %>% 
+    select(q_text, a_text, total, p_text)   %>%
+    rename(
+        Pregunta   = q_text,
+        Respuesta  = a_text,
+        Frecuencia = total,
+        Porcentaje = p_text)                %>%
+    select(Respuesta, Frecuencia, Porcentaje)
+
+    # pandoc.header("Tabla de frecuencias", level = 4)
+    print(kable(df_chula))
+    
+
+    # Agregué este loop para omitir gráficas donde haya más de 20 opciones
+    # pandoc.header("Gráfica de frecuencias", level = 4)
+
+    # Generar gráficas
+    p <- ggplot(df_var,
+        aes(x = a_text, y = total, fill = "#457b9d")) +
+        geom_col() +
+        geom_label(aes(label = paste0(total, "\n (", p_text, ")" )),
+        size = 2, fill = "white") +
+        labs(
+            title =  str_wrap(paste0(n_title, "\n"), width = 50),
+            x = "",
+            y = v_ylab,
+            caption = v_capt
+        ) +
+        theme_bw() +
+        ylim(0, n_limit) +
+        scale_fill_manual(values = "#457b9d") +
+        guides(fill = "none")+
+        theme(
+            axis.text.x = element_text(angle = 0)) +
+        scale_x_discrete(labels = wrap_format(10))
+
+    # Mostrar gráfica
+    print(p)
+
+
+    cat("\n\n\\pagebreak\n")   #forced new-page happens here.
+}
+
+```
+
