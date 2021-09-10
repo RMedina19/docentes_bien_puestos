@@ -15,7 +15,7 @@ rm(list=ls())
 
 # Cargar librerías 
 require(pacman)
-p_load(readxl, tidyverse, tidyr, stringr, scales)
+p_load(readxl, tidyverse, tidyr, stringr, scales, beepr)
 
 # Dirección 
 inp <- "03_datos_limpios/"
@@ -45,7 +45,7 @@ v_capt  <- "Fuente: Elaboración propia con datos de la encuesta \"Docentes bien
 # Datos de la variables 
 n_var   <- v_vars[1]
 df_var  <- df_data %>% filter(q_code == n_var) %>% mutate(as.character(a_text))
-n_title <- df_var$q_text
+n_title <- ifelse(is.na(unique(df_var$t_text)), df_var$q_text, paste0(df_var$q_text, " \n", df_var$t_text))
 n_limit <- max(df_var$freq)+0.1*max(df_var$freq)
 v_label <- str_wrap((unique(df_var$a_text)), width = 80)
 
@@ -77,7 +77,7 @@ for(i in 1:length(v_vars)){
     # Guardar datos de la variable
     n_var   <- v_vars[i]
     df_var  <- df_data %>% filter(q_code == n_var)
-    n_title <- df_var$q_text
+    n_title <- ifelse(is.na(unique(df_var$t_text)), df_var$q_text, paste0(df_var$q_text, ": \n", df_var$t_text))
     n_qcode <- unique(df_var$q_code)
     n_limit <- max(df_var$freq)+0.1*max(df_var$freq)
     

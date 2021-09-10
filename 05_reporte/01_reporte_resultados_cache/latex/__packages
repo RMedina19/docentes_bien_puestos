@@ -14,3 +14,4 @@ knitr
 kableExtra
 pander
 scales
+magrittr

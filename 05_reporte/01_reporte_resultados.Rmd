@@ -27,7 +27,7 @@ rm(list=ls())
 
 # Cargar librerías 
 require(pacman)
-p_load(readxl, tidyverse, tidyr, knitr, kableExtra, pander, scales)
+p_load(readxl, tidyverse, tidyr, knitr, magrittr, kableExtra, pander, scales)
 ```
 
 
@@ -88,7 +88,9 @@ El presente reporte incluye los resultados de la encuesta _Docentes bien puestos
 # Datos de la variables 
 n_var   <- v_vars[1]
 df_var  <- df_data %>% filter(q_code == n_var)
-n_title <- df_var$q_text
+# n_title <- df_var$q_text
+n_title <- ifelse(is.na(unique(df_var$t_text)), df_var$q_text, paste0(df_var$q_text, ": \n", df_var$t_text))
+
 
 df_chula <- df_var %>% 
     select(q_text, a_text, total, p_text) %>% 
@@ -106,13 +108,19 @@ kable(df_chula)
 
 
 
-```{r loop, echo = FALSE,  results = 'asis', cache=TRUE}
+```{r loop, echo = FALSE,  results = 'asis'}
+require(pacman)
+p_load(tidyverse, tidyr, knitr, magrittr, kableExtra, pander, scales)
+
 
 for(i in 1:length(v_vars)){
     # Guardar datos de la variable
     n_var   <- v_vars[i]
+    
+
     df_var  <- df_data %>% filter(q_code == n_var)
-    n_title <- as.character((as.data.frame(table(df_var$q_text)))[1, 1])
+    # n_title <- as.character((as.data.frame(table(df_var$q_text)))[1, 1])
+    n_title <- as.character(ifelse(is.na(unique(df_var$t_text)), unique(df_var$q_text), paste0(unique(df_var$q_text), " ", unique(df_var$t_text))))
     n_limit <- max(df_var$total)+0.1*max(df_var$total)
 
     # Generar tabla
