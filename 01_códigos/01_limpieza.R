@@ -3,7 +3,7 @@
 # Objetivo:                   Procesar resultados de la primera vuelta
 #
 # Encargada:                  Regina Isabel Medina Rosales
-# Correo:                     rmedina@intersecta.org
+# Correo:                     regina.medina@alumnos.cide.edu
 # Fecha de creación:          27 de agosto     de 2021
 # Última actualización:       10 de septiembre de 2021
 #------------------------------------------------------------------------------#
@@ -46,13 +46,13 @@ dim(df_crudo)
 v_names <- names(df_codebookr)
 
 # Guardar el texto de las preguntas
-df_preguntas <- df_codebookr            %>%
-    rename(
-        q_id   = v_names[2],
-        a_id   = v_names[4],
-        q_text = v_names[5])            %>%
-    filter(is.na(a_id), q_id %in% 1:53) %>%
-    select(q_id, q_text)                %>%
+df_preguntas <- df_codebookr                    %>%
+    rename(     
+        q_id   = v_names[2],        
+        a_id   = v_names[4],        
+        q_text = v_names[5])                    %>%
+    filter(is.na(a_id), q_id %in% 1:53)         %>%
+    select(q_id, q_text)                        %>%
     # Quitar indicaciones y código html
     mutate(
         q_text = str_replace_all(q_text, "<b>"    , ""),
@@ -66,40 +66,47 @@ df_preguntas <- df_codebookr            %>%
         q_text = str_replace_all(q_text, "<font color=\"#008000\">", ""),
         q_text = str_replace_all(q_text, "<font color=\"#0000FF\">", ""),
         q_text = str_replace_all(q_text, "</font>", ""),
-        q_text = str_replace_all(q_text, "&nbsp;" , " "))
+        q_text = str_replace_all(q_text, "&nbsp;" , " "), 
+        # Abreviar pregunta de consentimiento informado
+        q_text = ifelse(str_detect(q_text, "Confidencialidad"), 
+            "¿Acepta participar en la encuesta?", q_text), 
+        # Abreviar pregunta abierta para comentarios
+        q_text = ifelse(str_detect(q_text, "enormemente"), 
+            "Sección abierta para comentarios finales", q_text)
+        )
 
 # Guardar el texto de los temas     
-df_tematicas <- df_codebookr                %>% 
-    filter(`Is Topic` == T)                 %>% 
+df_tematicas <- df_codebookr                    %>% 
+    filter(`Is Topic` == T)                     %>% 
     rename(
         q_id   = v_names[2],
         t_id   = v_names[4],
-        t_text = v_names[5])                %>%
-    select(q_id, t_id, t_text)              %>%
+        t_text = v_names[5])                    %>%
+    select(q_id, t_id, t_text)                  %>%
     filter( 
         !is.na(q_id),   
         !is.na(t_id))   
     
 # Guardar el texto de las respuestas    
-df_respuestas     <- df_codebookr           %>%
-    filter(`Is Topic` == F)                 %>% 
-    rename( 
-        q_id   = v_names[2],    
-        a_id   = v_names[4],    
-        a_text = v_names[5])                %>%
-    select(q_id, a_id, a_text)              %>%
-    filter(
-        !is.na(q_id),
-        !is.na(a_id))
-
-
-# Unir codebook limpio 
-df_codebook <- df_preguntas                 %>% 
-    left_join(df_tematicas,  by = "q_id")   %>% 
-    left_join(df_respuestas, by = "q_id")   %>% 
+df_respuestas     <- df_codebookr               %>%
+    filter(`Is Topic` == F)                     %>% 
+    rename(     
+        q_id   = v_names[2],        
+        a_id   = v_names[4],        
+        a_text = v_names[5])                    %>%
+    select(q_id, a_id, a_text)                  %>%
+    filter( 
+        !is.na(q_id),   
+        !is.na(a_id))   
+    
+    
+# Unir codebook limpio  
+df_codebook <- df_preguntas                     %>% 
+    left_join(df_tematicas,  by = "q_id")       %>% 
+    left_join(df_respuestas, by = "q_id")       %>% 
     # Crear un identificador para las combinaciones posibles (pregunta + tema)
     mutate(c_id = paste(
-        q_id, t_id, sep = "-"))             %>% 
+        q_id, t_id, sep = "-"))                 %>% 
     filter(c_id != "18-NA")
 
 length(unique(df_codebook$c_id))
@@ -107,22 +114,22 @@ length(unique(df_codebook$c_id))
 ## 2.2. Limpiar los resultados -------------------------------------------------
 
 # Resultados 
-df_limpio <- df_crudo                       %>% 
-    filter(SbjNam == "campo1")              %>% 
-    select(c(Date, id:comentario))
+df_limpio <- df_crudo                           %>% 
+    filter(SbjNam == "campo1")                  %>% 
+    select(c(Date, id:comentario))  
 
 v_names <- names(df_limpio)
 v_names <- v_names[v_names != "nivel_estudios_otro"]
 
 # Limpieza de ejemplo 
-df_q0 <- df_limpio                          %>% 
-    rename(respuestas = v_names[1])         %>% 
-    select(respuestas)                      %>% 
-    group_by(respuestas)                    %>% 
-    summarise(total = n())                  %>% 
-    mutate(     
-        q_id = 0,       
-        t_id = NA)                          %>% 
+df_q0 <- df_limpio                              %>% 
+    rename(respuestas = v_names[1])             %>% 
+    select(respuestas)                          %>% 
+    group_by(respuestas)                        %>% 
+    summarise(total = n())                      %>% 
+    mutate(         
+        q_id = 0,           
+        t_id = NA)                              %>% 
     select(q_id, t_id, respuestas, total)
 
 # Base vacía 
@@ -133,14 +140,14 @@ df_respuestas <- data.frame(q_code = NA, a_text = NA, total = NA)
 for (i in 2:length(v_names)){
 
     # Procesar datos
-    df_q <- df_limpio                       %>% 
-        rename(a_text = v_names[i])         %>% 
-        select(a_text)                      %>% 
-        group_by(a_text)                    %>% 
-        summarise(total = n())              %>% 
-        mutate( 
-            q_code = v_names[i])            %>% 
-        mutate_all(as.character)            %>% 
+    df_q <- df_limpio                           %>% 
+        rename(a_text = v_names[i])             %>% 
+        select(a_text)                          %>% 
+        group_by(a_text)                        %>% 
+        summarise(total = n())                  %>% 
+        mutate(     
+            q_code = v_names[i])                %>% 
+        mutate_all(as.character)                %>% 
         select(q_code, a_text, total)
     
     df_respuestas <- df_respuestas %>% bind_rows(df_q) %>% filter(!is.na(q_code))
@@ -217,7 +224,7 @@ df_formato_xlsx  <- df_resultados %>%
     ) 
 
 openxlsx::write.xlsx(df_formato_xlsx, 
-    "03_datos_limpios/df_resultados_frecuencias.xlsx")
+    "03_datos_limpios/df_resultados_frecuencias.xlsx", overwrite = T)
 
 # FIN --------------------------------------------------------------------------    
     
