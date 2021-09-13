@@ -7,11 +7,7 @@ author:
 
 date: "`r format(Sys.time(), '%d/%m/%Y')`"
 
-output: 
-  rmarkdown::pdf_document:
-    toc: true
-    latex_engine: xelatex
-
+output: word_document
 ---
 
 <!---  Configuración inicial para programación en R --> 
@@ -27,7 +23,7 @@ rm(list=ls())
 
 # Cargar librerías 
 require(pacman)
-p_load(readxl, tidyverse, tidyr, knitr, magrittr, kableExtra, pander, scales)
+p_load(readxl, tidyverse, tidyr, knitr, magrittr, kableExtra, flextable, pander, scales)
 ```
 
 
@@ -102,7 +98,7 @@ df_chula <- df_var %>%
 
 # pander(df_chula)
 # pandoc.table(df_chula)
-kable(df_chula)
+knit_print(flextable(df_chula))
 ```
 
 
@@ -142,7 +138,7 @@ for(i in 1:length(v_vars)){
     select(Respuesta, Frecuencia, Porcentaje)
 
     # pandoc.header("Tabla de frecuencias", level = 4)
-    print(kable(df_chula))
+    knit_print(flextable(df_chula))
     
 
     # Agregué este loop para omitir gráficas donde haya más de 20 opciones
@@ -176,4 +172,3 @@ for(i in 1:length(v_vars)){
 }
 
 ```
-

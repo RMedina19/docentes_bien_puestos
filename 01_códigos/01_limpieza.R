@@ -5,7 +5,7 @@
 # Encargada:                  Regina Isabel Medina Rosales
 # Correo:                     regina.medina@alumnos.cide.edu
 # Fecha de creación:          27 de agosto     de 2021
-# Última actualización:       10 de septiembre de 2021
+# Última actualización:       13 de septiembre de 2021
 #------------------------------------------------------------------------------#
 
 
@@ -116,7 +116,13 @@ length(unique(df_codebook$c_id))
 # Resultados 
 df_limpio <- df_crudo                           %>% 
     filter(SbjNam == "campo1")                  %>% 
-    select(c(Date, id:comentario))  
+    select(c(Date, id:comentario))              %>% 
+# Homologar respuestas de la institución donde trabajan 
+    mutate(
+        escuela = case_when(
+            str_detect(escuela, "edros") ~ "Colegio Cedros", 
+            T ~ escuela))                                     
+    
 
 v_names <- names(df_limpio)
 v_names <- v_names[v_names != "nivel_estudios_otro"]
@@ -204,13 +210,17 @@ table(df_freq_total$total_answers) # Todas suman 13, así que es correcto
 # 3. Guardar datos -------------------------------------------------------------
 
 # Renombrar base
-df_resultados_frecuencias <- df_resultados 
+df_resultados_microdatos  <- df_limpio      # Microdatos limpios
+df_resultados_frecuencias <- df_resultados  # Frecuencias de los resultados 
 
 # Guardar en formato R 
+save(df_resultados_microdatos, 
+    file = "03_datos_limpios/df_resultados_microdatos.RData")
+
 save(df_resultados_frecuencias, 
     file = "03_datos_limpios/df_resultados_frecuencias.RData")
 
-# Guardar en formato xlsx
+# Renombrar para formato xlsx
 df_formato_xlsx  <- df_resultados %>% 
     rename(
         `Número de la pregunta` = q_id, 
@@ -223,8 +233,12 @@ df_formato_xlsx  <- df_resultados %>%
         `Porcentaje`            = p_text
     ) 
 
+# Guardar en formato xlsx
 openxlsx::write.xlsx(df_formato_xlsx, 
     "03_datos_limpios/df_resultados_frecuencias.xlsx", overwrite = T)
+
+openxlsx::write.xlsx(df_resultados_microdatos, 
+    file = "03_datos_limpios/df_resultados_microdatos.xlsx", overwrite = T)
 
 # FIN --------------------------------------------------------------------------    
     

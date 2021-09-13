@@ -5,7 +5,7 @@
 # Encargada:                  Regina Isabel Medina Rosales
 # Correo:                     regina.medina@alumnos.cide.edu
 # Fecha de creación:          10 de septiembre de 2021
-# Última actualización:       10 de septiembre de 2021
+# Última actualización:       13 de septiembre de 2021
 #------------------------------------------------------------------------------#
 
 # 0. Configuración inicial -----------------------------------------------------
