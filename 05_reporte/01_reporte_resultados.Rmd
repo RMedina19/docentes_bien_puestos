@@ -40,7 +40,7 @@ inp <- "../03_datos_limpios/"
 # 1. Cargar datos --------------------------------------------------------------
 
 # Base unificada de todas las respuestas
-load(paste0(inp, "df_resultados_frecuencias.RData"))
+load(paste0(inp, "df_resultados_exante_frecuencias.RData"))
 
 ```
 
@@ -49,7 +49,7 @@ load(paste0(inp, "df_resultados_frecuencias.RData"))
 ```{r general_vector, include = FALSE, cache=F}
 
 # Cambiar nombre de la base para facilitar manipulación
-df_data <- df_resultados_frecuencias
+df_data <- df_resultados_exante_frecuencias
 
 # Guardar nombre de las variables 
 v_vars  <- unique(df_data$q_code)
